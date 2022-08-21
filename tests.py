@@ -49,6 +49,7 @@ class CupcakeViewsTestCase(TestCase):
         db.session.rollback()
 
     def test_list_cupcakes(self):
+        """GET tests for all cupcakes"""
         with app.test_client() as client:
             resp = client.get("/api/cupcakes")
 
@@ -68,6 +69,7 @@ class CupcakeViewsTestCase(TestCase):
             })
 
     def test_get_cupcake(self):
+        """GET tests for one cupcake by id"""
         with app.test_client() as client:
             url = f"/api/cupcakes/{self.cupcake.id}"
             resp = client.get(url)
@@ -84,7 +86,12 @@ class CupcakeViewsTestCase(TestCase):
                 }
             })
 
+            url = f"/api/cupcakes/999999"
+            resp = client.get(url)
+            self.assertEqual(resp.status_code, 404)
+
     def test_create_cupcake(self):
+        """POST tests for creating a new cupcake"""
         with app.test_client() as client:
             url = "/api/cupcakes"
             resp = client.post(url, json=CUPCAKE_DATA_2)
@@ -107,3 +114,46 @@ class CupcakeViewsTestCase(TestCase):
             })
 
             self.assertEqual(Cupcake.query.count(), 2)
+
+    def test_patch_cupcake(self):
+        """PATCH tests for updating one cupcake"""
+        with app.test_client() as client:            
+            url = f'/api/cupcakes/{self.cupcake.id}'
+            resp = client.patch(url, json=CUPCAKE_DATA_2)
+
+            self.assertEqual(resp.status_code, 200)
+
+            self.assertEqual(resp.json, {
+                    "id": self.cupcake.id,
+                    "flavor": "TestFlavor2",
+                    "size": "TestSize2",
+                    "rating": 10,
+                    "image": "http://test.com/cupcake2.jpg"
+                })
+
+            self.assertEqual(Cupcake.query.count(), 1)
+
+            url = f"/api/cupcakes/999999"
+            resp = client.patch(url, json=CUPCAKE_DATA_2)
+            self.assertEqual(resp.status_code, 404)
+
+    def test_delete_cupcake(self):
+        """DELETE tests for deleting one cupcake"""
+
+        with app.test_client() as client:
+            url = f'/api/cupcakes/{self.cupcake.id}'
+            resp = client.delete(url)
+            
+            self.assertEqual(resp.status_code, 200)
+
+            self.assertEqual(resp.json, {"message" : "deleted that cupcake"})
+
+            self.assertEqual(Cupcake.query.count(), 0)
+
+            url = f"/api/cupcakes/999999"
+            resp = client.delete(url)
+            self.assertEqual(resp.status_code, 404)
+
+
+    # import pdb
+    # pdb.set_trace()
